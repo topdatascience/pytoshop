@@ -778,7 +778,8 @@ def nested_layers_to_psd(
         compression=enums.Compression.rle,  # type: int
         depth=None,                         # type: Optional[int]
         size=None,                          # type: Optional[Tuple[int, int]]
-        vector_mask=False                   # type: Optional[bool]
+        vector_mask=False,                   # type: Optional[bool]
+        dpi=200,
         ):  # type: (...) -> core.PsdFile
     """
     Convert a hierarchy of nested `Layer` instances to a `PsdFile`.
@@ -857,8 +858,11 @@ def nested_layers_to_psd(
         ),
         image_resources=image_resources.ImageResources(
             blocks=[
+                image_resources.ResolutionInfo(
+                    dpi=dpi,
+                ),
                 image_resources.LayersGroupInfo(
-                    group_ids=group_ids)
+                    group_ids=group_ids),
             ]
         ),
         compression=compression
