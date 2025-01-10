@@ -256,6 +256,62 @@ class ImageResourceUnicodeString(ImageResourceBlock):
         fd.write(util.encode_unicode_string(self.value))
 
 
+class ResolutionInfo(ImageResourceBlock):
+    def __init__(self,
+                 name='',                               # type: unicode
+                 dpi=(200, 200),
+        ):  # type: (...) -> None
+        self.name = name
+        self._dpi = dpi
+        self._unit = 1
+
+    _resource_id = enums.ImageResourceID.resolution_info
+
+    @property
+    def dpi(self):  # type: (...) -> float
+        "dpi"
+        return self._dpi
+
+    @dpi.setter
+    def dpi(self, value):  # type: (float) -> None
+        self._dpi = value
+
+    @classmethod
+    def read_data(cls,
+                  fd,           # type: BinaryIO
+                  resource_id,  # type: int
+                  name,         # type: unicode
+                  length,       # type: int
+                  header        # type: core.Header
+                  ):            # type: (...) -> ImageResourceBlock
+        x_resolution = util.read_value(fd, 'I')
+        x_units = util.read_value(fd, 'H')
+        y_resolution = util.read_value(fd, 'I')
+        y_units = util.read_value(fd, 'H')
+        x_dpi = x_resolution / x_units
+        y_dpi = y_resolution / y_units
+        return cls(name=name, dpi=(x_dpi, y_dpi))
+
+    def data_length(self, header):  # type: (core.Header) -> int
+        # | | ResolutionInfo (SubDirectory) -->
+        # | | - Tag 0x03ed (16 bytes)
+        # | | + [BinaryData directory, 16 bytes]
+        # | | | XResolution = 19660800
+        # | | | - Tag 0x0000 (4 bytes, int32u[1])
+        # | | | DisplayedUnitsX = 1
+        # | | | - Tag 0x0002 (2 bytes, int16u[1])
+        # | | | YResolution = 19660800
+        # | | | - Tag 0x0004 (4 bytes, int32u[1])
+        # | | | DisplayedUnitsY = 1
+        # | | | - Tag 0x0006 (2 bytes, int16u[1])
+        return 16
+
+    def write_data(self, fd, header):
+        x_resolution = int(self.dpi[0] * self._unit * 65536)
+        y_resolution = int(self.dpi[1] * self._unit * 65536)
+        util.write_value(fd, 'IHH', x_resolution, self._unit, 1)
+        util.write_value(fd, 'IHH', y_resolution, self._unit, 1)
+
 class LayersGroupInfo(ImageResourceBlock):
     """
     Layers group information.

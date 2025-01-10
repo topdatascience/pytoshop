@@ -11,7 +11,6 @@ from __future__ import unicode_literals, absolute_import
 
 from typing import BinaryIO, Dict, Optional, Tuple  # NOQA
 
-
 from .color_mode import ColorModeData
 from . import docs
 from . import enums
